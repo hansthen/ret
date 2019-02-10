@@ -1,0 +1,40 @@
+agency_id,agency_name,agency_url,agency_timezone,agency_phone
+ALLGO,allGo (Keolis),http://www.allgobus.nl,Europe/Amsterdam,003188-0331360
+ARR,Arriva,https://www.arriva.nl,Europe/Amsterdam,0031900-2022022
+BRAVO:ARR,Bravo (Arriva),http://www.bravo.info,Europe/Amsterdam,0031800-0232545
+BRAVO:CXX,Bravo (Hermes),http://www.bravo.info,Europe/Amsterdam,0031800-0222277
+BRENG,Breng,http://www.breng.nl,Europe/Amsterdam,003126-2142140
+CXX,Connexxion,http://www.connexxion.nl,Europe/Amsterdam,0031900-2666399
+DOEKSEN,Rederij Doeksen,http://www.rederij-doeksen.nl/,Europe/Amsterdam,0031562442002
+EBS,EBS,http://www.ebs-ov.nl,Europe/Amsterdam,0031800-0327
+FF,Westerschelde Ferry,http://www.westerscheldeferry.nl,Europe/Amsterdam,003188-0760400
+GVB,GVB,http://www.gvb.nl,Europe/Amsterdam,0031900-8011
+HTM,HTM,http://www.htm.nl,Europe/Amsterdam,0031900-4864636
+HTMBUZZ,HTMbuzz,http://www.htmbuzz.nl,Europe/Amsterdam,0031900-4864636
+IFF:ABRN,Abellio Rail NRW,http://www.abellio.de/de/nordrhein-westfalen,Europe/Amsterdam,+4908002235546
+IFF:BN,Blauwnet,http://www.blauwnet.nl,Europe/Amsterdam,0031314350111
+IFF:BRENG,Breng,http://www.breng.nl,Europe/Amsterdam,003126-2142140
+IFF:DB,DB,http://www.db.de,Europe/Amsterdam,+491806996633
+IFF:EB,Eurobahn,https://www.eurobahn.de,Europe/Amsterdam,003280038762246
+IFF:NMBS,NMBS,http://www.nmbs.be,Europe/Amsterdam,+3225282828
+IFF:NOORD,Arriva,https://www.arriva.nl,Europe/Amsterdam,0031900-2022022
+IFF:NS,NS,http://www.ns.nl,Europe/Amsterdam,003130-7515155
+IFF:NSI,NS International,http://www.nsinternational.nl,Europe/Amsterdam,0031302300023
+IFF:QBUZZ,Qbuzz,http://www.qbuzz.nl,Europe/Amsterdam,0031900-7289965
+IFF:RNET,R-net,http://www.connexxion.nl,Europe/Amsterdam,0031900-2666399
+IFF:SYN,Syntus,http://www.syntus.nl,Europe/Amsterdam,0031314350111
+IFF:VALLEI,Valleilijn,http://www.valleilijn.nl,Europe/Amsterdam,0031900-2666399
+NIAG,NIAG,http://www.niag-online.de/,Europe/Amsterdam,+4901803504030
+OVERAL,Overal (Connexxion),http://www.overal.nl,Europe/Amsterdam,0031900-2666399
+OVREGIOY,OV Regio IJsselmond,http://www.ovregioijsselmond.nl,Europe/Amsterdam,0031900-2666399
+QBUZZ,Qbuzz,http://www.qbuzz.nl,Europe/Amsterdam,0031900-7289965
+RET,RET,http://www.ret.nl,Europe/Amsterdam,0031900-5006010
+RVE,RVE,http://www.avv.de,Europe/Amsterdam,
+SYNTUS,Syntus,http://www.syntus.nl,Europe/Amsterdam,003188-0331360
+SYNTUS:UT,Syntus Utrecht,https://www.syntusutrecht.nl,Europe/Amsterdam,003188-0331360
+TESO,TESO,http://www.teso.nl/,Europe/Amsterdam,0031222369600
+TEXELHOPPER,Texelhopper,http://www.texelhopper.nl,Europe/Amsterdam,0031222784000
+TWENTS,Twents (Syntus/Keolis),http://www.twents.nl,Europe/Amsterdam,003188-0331360
+UOV,U-OV,http://www.u-ov.info,Europe/Amsterdam,0031900-5252241
+WATERBUS,Waterbus,http://www.waterbus.nl,Europe/Amsterdam,0031800-0232545
+WPD,Wagenborg,http://www.wpd.nl/,Europe/Amsterdam,0031881031000

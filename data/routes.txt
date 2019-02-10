@@ -1,0 +1,6 @@
+route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_color,route_text_color,route_url
+62481,RET,D,D lijn,,1,34b4e4,000000,
+62325,RET,C,C lijn,,1,e32119,ffffff,
+62482,RET,E,E lijn,,1,003a8c,ffffff,
+63063,RET,B,B lijn,,1,ffdd00,000000,
+63062,RET,A,A lijn,,1,00b43f,ffffff,
