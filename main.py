@@ -13,13 +13,12 @@ import smopy
 import geocoder
 from datetime import datetime, timedelta
 from collections import defaultdict, namedtuple
+import threading
 
 logging.basicConfig(level=os.getenv("LOGLEVEL", "INFO"))
 
 
 def load_stops(fname, filter_=lambda row: row[1].startswith("HA")):
-    """Load the stops data
-    """
     with open(fname) as f:
         reader = csv.reader(f)
         headers = next(reader)
@@ -57,6 +56,7 @@ def load_shapes(fname, filter_=lambda row: row[0] in shape_keys):
     with open(fname) as f:
         reader = csv.reader(f)
         headers = next(reader)
+
         for row in reader:
             if filter_(row):
                 d[row[0]].append(row)
@@ -88,10 +88,32 @@ def load_map(name):
     bbox = g.json["bbox"]
     bbox = bbox["northeast"] + bbox["southwest"]
     map_ = smopy.Map(bbox, zoom=11)
-    return map_
+    ax = map_.show_mpl(figsize=(16, 12))
+    xs = []
+    ys = []
+    for stop in stops.values():
+        x, y = map_.to_pixels(float(stop[3]), float(stop[4]))
+        xs.append(x)
+        ys.append(y)
+
+    plt.ion()
+    plt.show()
+    ax.plot(xs, ys, ".c")
+
+    for shape in shapes.values():
+        xys = [
+            map_.to_pixels(float(element[2]), float(element[3])) for element in shape
+        ]
+
+        xs = [elem[0] for elem in xys]
+        ys = [elem[1] for elem in xys]
+        ax.plot(xs, ys, "-b")
+
+    plt.pause(0.001)
+    return map_, ax
 
 
-def subscribe_ov_feed(ax, map_):
+def subscribe_ov_feed(map_, ax, locks):
     context = zmq.Context()
     kv8 = context.socket(zmq.SUB)
     kv8.connect("tcp://kv7.openov.nl:7817")
@@ -99,20 +121,6 @@ def subscribe_ov_feed(ax, map_):
 
     poller = zmq.Poller()
     poller.register(kv8, zmq.POLLIN)
-
-    interesting = [
-        "DataOwnerCode",
-        "OperationDate",
-        "LinePlanningNumber",
-        "JourneyNumber",
-        "UserStopCode",
-        "LastUpdateTimeStamp",
-        "Time",
-        "ExpectedDepartureTime",
-        "TripStopStatus",
-        "VehicleNumber",
-        "BlockCode",
-    ]
 
     while True:
         keys = []
@@ -129,21 +137,35 @@ def subscribe_ov_feed(ax, map_):
                     continue
                 values = line.split("|")
                 d = {key: value for (key, value) in zip(keys, values)}
-                if "UserStopCode" in d and d["UserStopCode"] in stops:
-                    stop = stops[d["UserStopCode"]]
-                    lat, long_ = stop[3:5]
-                    d["Lat"] = float(lat)
-                    d["Long"] = float(long_)
+                if "UserStopCode" in d and d["UserStopCode"] in stops_by_stop_code:
+                    stop = stops_by_stop_code[d["UserStopCode"]]
+                    stop_id = stop[0]
 
                     if not d["LinePlanningNumber"].startswith("M"):
                         continue
-                    expected_arrival = normalize(d)
-                    journeys[(d["JourneyNumber"], d["LineDirection"])][
-                        int(d["UserStopOrderNumber"])
-                    ] = (expected_arrival, d["UserStopCode"])
+                    base = datetime.strptime(d["OperationDate"], "%Y-%m-%d")
+                    expected_arrival = normalize(d["ExpectedArrivalTime"])
+                    expected_departure = normalize(d["ExpectedDepartureTime"])
+
+                    trip = trips_by_journey[d["JourneyNumber"]]
+                    lock = locks[trip[2]]
+                    with lock:
+                        journey = schedule[trip[2]]
+                        for index, item in enumerate(journey):
+                            if item.stop_id == stop_id:
+                                break
+                        else:
+                            continue
+
+                        if item.arrival_time != expected_arrival:
+                            print(item, expected_arrival, expected_departure)
+                        journey[index] = item._replace(
+                            arrival_time=expected_arrival,
+                            departure_time=expected_departure,
+                        )
 
 
-def update_map():
+def update_map(map_, ax, locks):
     dots = []
 
     def pairwise(iterable):
@@ -159,64 +181,50 @@ def update_map():
 
         now = datetime.now()
         for id_, trip in schedule.items():
-            for start, stop in pairwise(trip):
-                if start.departure_time < now < stop.arrival_time:
-                    ratio = (stop.arrival_time - now) / (
-                        stop.arrival_time - start.departure_time
-                    )
-                    stop_info_start = stops[start.stop_id]
-                    stop_info_stop = stops[stop.stop_id]
+            lock = locks[id_]
+            with lock:
+                for start, stop in pairwise(trip):
+                    if start.departure_time < now < stop.arrival_time:
+                        ratio = (stop.arrival_time - now) / (
+                            stop.arrival_time - start.departure_time
+                        )
+                        stop_info_start = stops[start.stop_id]
+                        stop_info_stop = stops[stop.stop_id]
 
-                    vehicle_lat = ratio * float(stop_info_start[3]) + (
-                        1 - ratio
-                    ) * float(stop_info_stop[3])
-                    vehicle_lon = ratio * float(stop_info_start[4]) + (
-                        1 - ratio
-                    ) * float(stop_info_stop[4])
-                    x, y = map_.to_pixels(vehicle_lat, vehicle_lon)
-                    dots.append(ax.plot(x, y, "or"))
+                        vehicle_lat = ratio * float(stop_info_start[3]) + (
+                            1 - ratio
+                        ) * float(stop_info_stop[3])
+                        vehicle_lon = ratio * float(stop_info_start[4]) + (
+                            1 - ratio
+                        ) * float(stop_info_stop[4])
+                        x, y = map_.to_pixels(vehicle_lat, vehicle_lon)
+                        dots.append(ax.plot(x, y, "or"))
+                        break
         plt.pause(0.001)
         time.sleep(0.01)
 
 
 def normalize(
-    d, base=datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    time_string, base=datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 ):
-    hours, minutes, seconds = d.split(":")
+    hours, minutes, seconds = time_string.split(":")
     delta = timedelta(hours=int(hours), minutes=int(minutes), seconds=int(seconds))
     return base + delta
 
 
 stops = load_stops("data/stops.txt")
+stops_by_stop_code = {stop[1]: stop for stop in stops.values()}
 routes = load_routes("data/routes.txt")
 services = load_services("data/calendar_dates.txt")
 trips, shape_keys = load_trips("data/trips.txt")
+trips_by_journey = {trip[5]: trip for trip in trips.values()}
 schedule = load_schedule("data/stop_times.txt")
 shapes = load_shapes("data/shapes.txt")
 journeys = defaultdict(dict)
 
-map_ = load_map("Rotterdam")
-ax = map_.show_mpl(figsize=(16, 12))
-xs = []
-ys = []
-for stop in stops.values():
-    x, y = map_.to_pixels(float(stop[3]), float(stop[4]))
-    xs.append(x)
-    ys.append(y)
-
-plt.ion()
-plt.show()
-ax.plot(xs, ys, ".c")
-
-for shape in shapes.values():
-    xys = [map_.to_pixels(float(element[2]), float(element[3])) for element in shape]
-
-    xs = [elem[0] for elem in xys]
-    ys = [elem[1] for elem in xys]
-    ax.plot(xs, ys, "-b")
-
-
-# plt.draw()
-plt.pause(0.001)
-# subscribe_ov_feed(ax, map_)
-update_map()
+map_, ax = load_map("Rotterdam")
+locks = {id_: threading.Lock() for id_ in schedule}
+thread = threading.Thread(target=subscribe_ov_feed, args=[map_, ax, locks])
+thread.start()
+update_map(map_, ax, locks)
+thread.join()
