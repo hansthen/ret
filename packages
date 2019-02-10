@@ -1,0 +1,4 @@
+sudo apt-get install build-essential cmake libboost-dev \
+>                    libexpat1-dev zlib1g-dev libbz2-dev
+sudo apt install python3-rtree
+
