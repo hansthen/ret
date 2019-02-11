@@ -1,7 +1,14 @@
 This program provides a real time visual feed of metro lines
 in Rotterdam.
 
-Longitude and latitude of Rotterdam
-Longitude of Rotterdam: 4.4777325
+Installation
+===================
+To install the simulator, you need to install docker first and then build 
+```shell
+docker build -t ret .
+docker run --net=host --env="DISPLAY" --volume="$HOME/.Xauthority:/root/.Xauthority:rw" -i -t ret
+```
 
-Latitude of Rotterdam: 51.9244201
+
+
+
